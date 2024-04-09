@@ -1,48 +1,49 @@
-# This is the template for Problem 1 only.
-# For problems 2 and 3, keep the class definitions
-# the same and rewrite the main program
 import rsa
-key_size = 2048
-
 class Sender:
-    def __init__(self, key_size):
-        self.pubkey, self.privkey = rsa.newkeys(key_size)
-        self.key_size = key_size
-        self.plaintext_message = None
-        self.key_pair = None
-        self.public_key = None
-        self.private_key = None
-        self.hash_value = None
+    def __init__(self, message, key_size=2048):
+        self.message = message
+        self.public_key, self.private_key = rsa.newkeys(key_size)
+        self.hash = rsa.compute_hash(self.message, 'SHA-256')
+        self.signature = None
+        self.cipher = None
+
+    def encrypt(self):
+        self.cipher = rsa.encrypt(self.message, self.public_key) 
+
+    def sign(self):
+        self.signature = rsa.sign_hash(self.hash, self.private_key, 'SHA-256')
+
+class Receiver:
+    def __init__(self):
+        self.plaintext = None
+        self.private_key, self.public_key = None, None
         self.signature = None
         self.ciphertext = None
 
-    def encrypt(self, plaintext):
-        self.plaintext_message = plaintext
-        self.ciphertext = rsa.encrypt(plaintext, self.pubkey)
-        return self.ciphertext
-    
-    def sign(self, plaintext):
-        self.hash_value = rsa.compute_hash(plaintext, 'SHA-256')
-        self.signature = rsa.sign(self.hash_value, self.privkey, 'SHA-256')
-        return self.signature
+    def decrypt(self, cipher, private_key, public_key):
+        self.ciphertext = cipher
+        self.private_key = private_key
+        self.public_key = public_key
+        self.message = rsa.decrypt(self.ciphertext, self.private_key).decode('utf-8')
+        print("Decrypted message:", self.message)
 
-class Receiver:
-    def __init__(self, key_size):
-        self.pubkey, self.privkey = rsa.newkeys(key_size)
-        self.key_size = key_size
 
-    def decrypt(self, ciphertext):
-        return rsa.decrypt(ciphertext, self.privkey)
-    
-    def verify(self, plaintext, signature):
-        return rsa.verify(plaintext, signature, self.pubkey)
+    def verify(self, message, signature, sender_public_key):
+        self.signature = signature
+        print('Verification:', rsa.verify(message, self.signature, sender_public_key))
 
 if __name__ == "__main__":
     with open('message1.txt', 'rb') as file:
         plaintext = file.read()
-    # initialize sender and receiver objects with 2048 key_size
-    key_size = 2048
-    sender = Sender(key_size)
-    print(sender.encrypt(plaintext))
-    sender.sign(plaintext)
-    receiver = Receiver(key_size)
+
+    sender = Sender(plaintext)
+    sender.encrypt()
+    sender.sign()
+
+    plaintext[0] = plaintext[0] + 1
+
+
+    receiver = Receiver()
+    receiver.decrypt(plaintext, sender.private_key, sender.public_key)
+    receiver.verify(sender.message, sender.signature, sender.public_key)
+
