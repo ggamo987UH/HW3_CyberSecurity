@@ -1,4 +1,5 @@
 import rsa
+import os
 class Sender:
     def __init__(self, message, key_size=2048):
         self.message = message
@@ -30,7 +31,10 @@ class Receiver:
 
     def verify(self, message, signature, sender_public_key):
         self.signature = signature
-        print('Verification:', rsa.verify(message, self.signature, sender_public_key))
+        try:
+            print('Verification:', rsa.verify(message, self.signature, sender_public_key))
+        except rsa.VerificationError:
+            print('Verification: Failed')
 
 if __name__ == "__main__":
     with open('message1.txt', 'rb') as file:
@@ -40,10 +44,9 @@ if __name__ == "__main__":
     sender.encrypt()
     sender.sign()
 
-    plaintext[0] = plaintext[0] + 1
-
+    modified_signature = sender.signature
+    modified_signature = modified_signature[:1] + bytes([modified_signature[1] ^ 1]) + modified_signature[2:]
 
     receiver = Receiver()
-    receiver.decrypt(plaintext, sender.private_key, sender.public_key)
-    receiver.verify(sender.message, sender.signature, sender.public_key)
-
+    receiver.decrypt(sender.cipher, sender.private_key, sender.public_key)
+    receiver.verify(sender.message, modified_signature, sender.public_key)
