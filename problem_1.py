@@ -46,3 +46,5 @@ if __name__ == "__main__":
     receiver = Receiver()
     receiver.decrypt(sender.cipher, sender.private_key, sender.public_key)
     receiver.verify(sender.message, sender.signature, sender.public_key)
+
+    print("My method: I grabbed the message from a file and then encrypted and signed it using RSA with the generated Hash. I then decrypted the message and verified the signature.")

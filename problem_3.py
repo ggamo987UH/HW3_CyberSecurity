@@ -50,3 +50,4 @@ if __name__ == "__main__":
     receiver = Receiver()
     receiver.decrypt(sender.cipher, sender.private_key, sender.public_key)
     receiver.verify(sender.message, modified_signature, sender.public_key)
+
